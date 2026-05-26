@@ -1,7 +1,8 @@
-import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
+import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
 import { Particles } from "@/components/cyber/Particles";
+import { useRouterState } from "@tanstack/react-router";
 
 const titles: Record<string, { t: string; s: string }> = {
   "/": { t: "Command Center", s: "Real-time network intrusion overview" },
@@ -15,21 +16,16 @@ const titles: Record<string, { t: string; s: string }> = {
   "/profile": { t: "User Profile", s: "Account & activity overview" },
 };
 
-export const Route = createFileRoute("/_app")({
-  beforeLoad: ({ location }) => {
-    if (location.pathname === "/_app") throw redirect({ to: "/" });
-  },
-  component: AppLayout,
-});
+export const Route = createFileRoute("/_app")({ component: AppLayout });
 
 function AppLayout() {
-  const path = typeof window !== "undefined" ? window.location.pathname : "/";
-  const meta = titles[path] || { t: "Sentinel", s: "AI NIDS Platform" };
+  const { location } = useRouterState();
+  const meta = titles[location.pathname] || { t: "Sentinel", s: "AI NIDS Platform" };
   return (
     <div className="min-h-screen flex relative overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none"><Particles /></div>
+      <div className="absolute inset-0 pointer-events-none z-0"><Particles /></div>
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 relative">
+      <div className="flex-1 flex flex-col min-w-0 relative z-10">
         <TopBar title={meta.t} subtitle={meta.s} />
         <main className="flex-1 p-4 md:p-6 overflow-y-auto relative">
           <Outlet />
