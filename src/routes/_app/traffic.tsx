@@ -123,7 +123,7 @@ function Traffic() {
               <YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} />
               <Tooltip contentStyle={{ background: "oklch(0.16 0.04 270 / 0.95)", border: "1px solid var(--cyber-cyan)", borderRadius: 8 }} />
               <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                {protocols.map((p, i) => <Bar key={i} dataKey="value" fill={p.color} />)}
+                {protocols.map((p, i) => <Cell key={i} fill={p.color} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
