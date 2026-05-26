@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
   AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid,
-  BarChart, Bar, LineChart, Line,
+  BarChart, Bar, Cell,
 } from "recharts";
 import { StatCard } from "@/components/cyber/StatCard";
 import { ArrowDownToLine, ArrowUpFromLine, Network, Wifi, AlertCircle } from "lucide-react";
