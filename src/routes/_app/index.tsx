@@ -2,11 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { StatCard } from "@/components/cyber/StatCard";
 import {
-  Shield, AlertTriangle, Network, Activity, Cpu, MemoryStick, Wifi, Zap, Eye, Brain
+  Shield, AlertTriangle, Network, Cpu, MemoryStick, Wifi, Zap, Brain
 } from "lucide-react";
 import {
   AreaChart, Area, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid,
-  PieChart, Pie, Cell, LineChart, Line, BarChart, Bar
+  PieChart, Pie, Cell, LineChart, Line
 } from "recharts";
 import { WorldAttackMap } from "@/components/cyber/WorldAttackMap";
 import { LiveAlertsFeed } from "@/components/cyber/LiveAlertsFeed";
