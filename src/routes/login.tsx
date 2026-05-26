@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Fingerprint, Lock, Mail, ScanLine, Radar, KeyRound, ShieldCheck } from "lucide-react";
+import { Fingerprint, Lock, Mail, Radar, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { Particles } from "@/components/cyber/Particles";
 
