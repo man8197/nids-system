@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Download, FileText, TrendingUp, Brain, Target } from "lucide-react";
-import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, LineChart, Line, Legend } from "recharts";
+import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, LineChart, Line } from "recharts";
 import { StatCard } from "@/components/cyber/StatCard";
 
 export const Route = createFileRoute("/_app/reports")({ component: Reports });
