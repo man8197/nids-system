@@ -1,12 +1,13 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Activity, ShieldAlert, Bell, Globe2, FileBarChart,
-  ScrollText, Settings, UserCircle, LogIn, Cpu, Radar
+  ScrollText, Settings, UserCircle, LogIn, Cpu, Radar, Brain
 } from "lucide-react";
 import { motion } from "framer-motion";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/ml", label: "ML Models", icon: Brain },
   { to: "/traffic", label: "Traffic Monitor", icon: Activity },
   { to: "/threats", label: "Threat Analysis", icon: ShieldAlert },
   { to: "/alerts", label: "Alerts", icon: Bell },
@@ -17,6 +18,7 @@ const navItems = [
   { to: "/profile", label: "Profile", icon: UserCircle },
   { to: "/login", label: "Auth", icon: LogIn },
 ];
+
 
 export function Sidebar() {
   const { location } = useRouterState();

@@ -17,6 +17,7 @@ import { Route as AppThreatsRouteImport } from './routes/_app/threats'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppReportsRouteImport } from './routes/_app/reports'
 import { Route as AppProfileRouteImport } from './routes/_app/profile'
+import { Route as AppMlRouteImport } from './routes/_app/ml'
 import { Route as AppMapRouteImport } from './routes/_app/map'
 import { Route as AppLogsRouteImport } from './routes/_app/logs'
 import { Route as AppAlertsRouteImport } from './routes/_app/alerts'
@@ -60,6 +61,11 @@ const AppProfileRoute = AppProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMlRoute = AppMlRouteImport.update({
+  id: '/ml',
+  path: '/ml',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMapRoute = AppMapRouteImport.update({
   id: '/map',
   path: '/map',
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/alerts': typeof AppAlertsRoute
   '/logs': typeof AppLogsRoute
   '/map': typeof AppMapRoute
+  '/ml': typeof AppMlRoute
   '/profile': typeof AppProfileRoute
   '/reports': typeof AppReportsRoute
   '/settings': typeof AppSettingsRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/alerts': typeof AppAlertsRoute
   '/logs': typeof AppLogsRoute
   '/map': typeof AppMapRoute
+  '/ml': typeof AppMlRoute
   '/profile': typeof AppProfileRoute
   '/reports': typeof AppReportsRoute
   '/settings': typeof AppSettingsRoute
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/_app/alerts': typeof AppAlertsRoute
   '/_app/logs': typeof AppLogsRoute
   '/_app/map': typeof AppMapRoute
+  '/_app/ml': typeof AppMlRoute
   '/_app/profile': typeof AppProfileRoute
   '/_app/reports': typeof AppReportsRoute
   '/_app/settings': typeof AppSettingsRoute
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
     | '/alerts'
     | '/logs'
     | '/map'
+    | '/ml'
     | '/profile'
     | '/reports'
     | '/settings'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/alerts'
     | '/logs'
     | '/map'
+    | '/ml'
     | '/profile'
     | '/reports'
     | '/settings'
@@ -146,6 +157,7 @@ export interface FileRouteTypes {
     | '/_app/alerts'
     | '/_app/logs'
     | '/_app/map'
+    | '/_app/ml'
     | '/_app/profile'
     | '/_app/reports'
     | '/_app/settings'
@@ -217,6 +229,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProfileRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/ml': {
+      id: '/_app/ml'
+      path: '/ml'
+      fullPath: '/ml'
+      preLoaderRoute: typeof AppMlRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/map': {
       id: '/_app/map'
       path: '/map'
@@ -245,6 +264,7 @@ interface AppRouteChildren {
   AppAlertsRoute: typeof AppAlertsRoute
   AppLogsRoute: typeof AppLogsRoute
   AppMapRoute: typeof AppMapRoute
+  AppMlRoute: typeof AppMlRoute
   AppProfileRoute: typeof AppProfileRoute
   AppReportsRoute: typeof AppReportsRoute
   AppSettingsRoute: typeof AppSettingsRoute
@@ -257,6 +277,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAlertsRoute: AppAlertsRoute,
   AppLogsRoute: AppLogsRoute,
   AppMapRoute: AppMapRoute,
+  AppMlRoute: AppMlRoute,
   AppProfileRoute: AppProfileRoute,
   AppReportsRoute: AppReportsRoute,
   AppSettingsRoute: AppSettingsRoute,
@@ -274,13 +295,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
