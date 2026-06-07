@@ -10,8 +10,11 @@ import {
 } from "recharts";
 import { WorldAttackMap } from "@/components/cyber/WorldAttackMap";
 import { LiveAlertsFeed } from "@/components/cyber/LiveAlertsFeed";
+import { BackendBanner } from "@/components/cyber/BackendBanner";
+import { useBackend, nidsApi } from "@/lib/nidsApi";
 
 export const Route = createFileRoute("/_app/")({ component: Dashboard });
+
 
 const traffic = Array.from({ length: 24 }, (_, i) => ({
   t: `${i}:00`,
@@ -45,15 +48,22 @@ const sevColor: Record<string, string> = {
 };
 
 function Dashboard() {
+  const { data: stats } = useBackend(() => nidsApi.stats(), []);
+  const { data: metrics } = useBackend(() => nidsApi.metrics(), []);
+  const rf = metrics?.random_forest;
+
   return (
     <div className="space-y-6">
+      <BackendBanner />
+
       {/* Stat grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Attacks Detected" value="12,847" sub="+18% vs yesterday" icon={<AlertTriangle className="h-5 w-5 text-[color:var(--cyber-pink)]" />} accent="pink" delay={0} />
-        <StatCard label="Threats Blocked" value="12,503" sub="97.3% block rate" icon={<Shield className="h-5 w-5 text-[color:var(--cyber-green)]" />} accent="green" delay={0.05} />
-        <StatCard label="Active Connections" value="3,412" sub="Live sessions" icon={<Network className="h-5 w-5 text-[color:var(--cyber-cyan)]" />} accent="cyan" delay={0.1} />
-        <StatCard label="AI Risk Score" value="74/100" sub="Elevated" icon={<Brain className="h-5 w-5 text-[color:var(--cyber-purple)]" />} accent="purple" delay={0.15} />
+        <StatCard label="Records Analyzed" value={stats ? stats.total_records.toLocaleString() : "12,847"} sub={stats ? `${stats.attack_percentage}% malicious` : "+18% vs yesterday"} icon={<AlertTriangle className="h-5 w-5 text-[color:var(--cyber-pink)]" />} accent="pink" delay={0} />
+        <StatCard label="Attacks Detected" value={stats ? stats.attack_records.toLocaleString() : "12,503"} sub={rf ? `${(rf.detection_rate * 100).toFixed(1)}% detection rate` : "97.3% block rate"} icon={<Shield className="h-5 w-5 text-[color:var(--cyber-green)]" />} accent="green" delay={0.05} />
+        <StatCard label="Benign Flows" value={stats ? stats.benign_records.toLocaleString() : "3,412"} sub="Live sessions" icon={<Network className="h-5 w-5 text-[color:var(--cyber-cyan)]" />} accent="cyan" delay={0.1} />
+        <StatCard label="Model Accuracy" value={rf ? `${(rf.accuracy * 100).toFixed(2)}%` : "74/100"} sub={rf ? `F1 ${rf.f1.toFixed(3)}` : "Elevated"} icon={<Brain className="h-5 w-5 text-[color:var(--cyber-purple)]" />} accent="purple" delay={0.15} />
       </div>
+
 
       {/* AI Risk meter + system health */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

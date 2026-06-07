@@ -3,8 +3,11 @@ import { motion } from "framer-motion";
 import { Download, FileText, TrendingUp, Brain, Target } from "lucide-react";
 import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, LineChart, Line } from "recharts";
 import { StatCard } from "@/components/cyber/StatCard";
+import { nidsApi, useBackend } from "@/lib/nidsApi";
+import { BackendBanner } from "@/components/cyber/BackendBanner";
 
 export const Route = createFileRoute("/_app/reports")({ component: Reports });
+
 
 const weekly = [
   { d: "Mon", det: 1240, blk: 1198 },
@@ -31,14 +34,21 @@ const reports = [
 ];
 
 function Reports() {
+  const { data: metrics } = useBackend(() => nidsApi.metrics(), []);
+  const { data: stats } = useBackend(() => nidsApi.stats(), []);
+  const rf = metrics?.random_forest;
+
   return (
     <div className="space-y-6">
+      <BackendBanner />
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Detection Accuracy" value="94.2%" sub="+2.8% w/w" icon={<Target className="h-5 w-5 text-[color:var(--cyber-green)]" />} accent="green" />
-        <StatCard label="False Positives" value="0.8%" sub="−0.3% w/w" icon={<TrendingUp className="h-5 w-5 text-[color:var(--cyber-cyan)]" />} accent="cyan" />
-        <StatCard label="ML Inference" value="3.2ms" sub="p95 latency" icon={<Brain className="h-5 w-5 text-[color:var(--cyber-purple)]" />} accent="purple" />
-        <StatCard label="Reports Generated" value="142" sub="this month" icon={<FileText className="h-5 w-5 text-[color:var(--cyber-pink)]" />} accent="pink" />
+        <StatCard label="Detection Accuracy" value={rf ? `${(rf.accuracy * 100).toFixed(2)}%` : "94.2%"} sub={rf ? `F1 ${rf.f1.toFixed(3)}` : "+2.8% w/w"} icon={<Target className="h-5 w-5 text-[color:var(--cyber-green)]" />} accent="green" />
+        <StatCard label="Attack Records" value={stats ? stats.attack_records.toLocaleString() : "0.8%"} sub={stats ? `${stats.attack_percentage}% of total` : "−0.3% w/w"} icon={<TrendingUp className="h-5 w-5 text-[color:var(--cyber-cyan)]" />} accent="cyan" />
+        <StatCard label="ML Inference" value={rf ? `${(rf.prediction_time_sec * 1000).toFixed(1)}ms` : "3.2ms"} sub="batch latency" icon={<Brain className="h-5 w-5 text-[color:var(--cyber-purple)]" />} accent="purple" />
+        <StatCard label="Records Analyzed" value={stats ? stats.total_records.toLocaleString() : "142"} sub="CICIDS2017" icon={<FileText className="h-5 w-5 text-[color:var(--cyber-pink)]" />} accent="pink" />
       </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="glass cyber-border rounded-xl p-5">
@@ -74,15 +84,21 @@ function Reports() {
       </div>
 
       <div className="glass cyber-border rounded-xl p-5">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div>
             <h3 className="font-bold tracking-wider">AI-GENERATED REPORTS</h3>
-            <p className="text-xs text-muted-foreground">Auto-compiled by Sentinel Neural Reporter</p>
+            <p className="text-xs text-muted-foreground">Live exports from the ML backend</p>
           </div>
-          <button className="text-xs px-4 py-2 rounded-lg bg-gradient-to-r from-[color:var(--cyber-cyan)] to-[color:var(--cyber-purple)] text-black font-bold">
-            Generate new
-          </button>
+          <div className="flex gap-2">
+            {(["csv", "excel", "pdf"] as const).map((f) => (
+              <a key={f} href={nidsApi.reportUrl(f)} target="_blank" rel="noreferrer"
+                className="text-xs px-4 py-2 rounded-lg bg-gradient-to-r from-[color:var(--cyber-cyan)] to-[color:var(--cyber-purple)] text-black font-bold flex items-center gap-1.5">
+                <Download className="h-3.5 w-3.5" /> {f.toUpperCase()}
+              </a>
+            ))}
+          </div>
         </div>
+
         <div className="space-y-2">
           {reports.map((r, i) => (
             <motion.div key={r.name} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}

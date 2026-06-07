@@ -6,6 +6,7 @@ import { useRouterState } from "@tanstack/react-router";
 
 const titles: Record<string, { t: string; s: string }> = {
   "/": { t: "Command Center", s: "Real-time network intrusion overview" },
+  "/ml": { t: "ML Model Lab", s: "Random Forest · Decision Tree · KNN comparison" },
   "/traffic": { t: "Traffic Monitor", s: "Live packet flow & protocol analysis" },
   "/threats": { t: "Threat Analysis", s: "AI-powered threat intelligence" },
   "/alerts": { t: "Alert Center", s: "Prioritized intrusion notifications" },
@@ -15,6 +16,7 @@ const titles: Record<string, { t: string; s: string }> = {
   "/settings": { t: "Settings", s: "Platform configuration" },
   "/profile": { t: "User Profile", s: "Account & activity overview" },
 };
+
 
 export const Route = createFileRoute("/_app")({ component: AppLayout });
 
