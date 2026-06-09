@@ -76,7 +76,7 @@ function Alerts() {
       <div className="glass cyber-border rounded-xl p-4 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-black/30 flex-1 min-w-[200px]">
           <Search className="h-4 w-4 text-muted-foreground" />
-          <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search title or source IP…"
+          <input value={q} onChange={e => { setLocalQ(e.target.value); setGlobalQ(e.target.value); }} placeholder="Search title or source IP…"
             className="bg-transparent outline-none text-sm w-full placeholder:text-muted-foreground" />
         </div>
         <div className="flex items-center gap-2">

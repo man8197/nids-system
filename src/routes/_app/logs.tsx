@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Search, Download, Filter, ScrollText, Shield, AlertCircle, Info } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useGlobalSearch } from "@/lib/globalSearch";
+import { nidsApi, useLiveStream } from "@/lib/nidsApi";
 
 export const Route = createFileRoute("/_app/logs")({ component: Logs });
 
@@ -31,9 +33,20 @@ const lines = [
 ];
 
 function Logs() {
-  const [q, setQ] = useState("");
+  const { events } = useLiveStream(60);
+  const { query: gQ, setQuery: setGQ } = useGlobalSearch();
+  const [localQ, setLocalQ] = useState("");
+  const q = gQ || localQ;
+  useEffect(() => { if (gQ) setLocalQ(gQ); }, [gQ]);
   const [lvl, setLvl] = useState<Lvl | "All">("All");
-  const filtered = lines.filter(l => (lvl === "All" || l.l === lvl) && (q === "" || (l.m + l.src).toLowerCase().includes(q.toLowerCase())));
+  const liveLines = events.map((e, i) => ({
+    t: new Date(Date.now() - i * 1000).toISOString().slice(11, 23),
+    l: (e.is_attack ? "ERROR" : "INFO") as Lvl,
+    src: "ml.predictor",
+    m: `${e.label} from ${e.src_ip} → port ${e.dst_port}${e.confidence != null ? ` (conf ${(e.confidence * 100).toFixed(1)}%)` : ""}`,
+  }));
+  const allLines = liveLines.length > 0 ? [...liveLines, ...lines] : lines;
+  const filtered = allLines.filter(l => (lvl === "All" || l.l === lvl) && (q === "" || (l.m + l.src).toLowerCase().includes(q.toLowerCase())));
 
   return (
     <div className="space-y-6">
@@ -59,7 +72,7 @@ function Logs() {
       <div className="glass cyber-border rounded-xl p-4 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-black/30 flex-1 min-w-[200px]">
           <Search className="h-4 w-4 text-muted-foreground" />
-          <input value={q} onChange={e => setQ(e.target.value)} placeholder="grep logs…"
+          <input value={q} onChange={e => { setLocalQ(e.target.value); setGQ(e.target.value); }} placeholder="grep logs…"
             className="bg-transparent outline-none text-sm w-full font-mono" />
         </div>
         <div className="flex items-center gap-2">
@@ -69,9 +82,10 @@ function Logs() {
               className={`text-xs px-3 py-1.5 rounded-full border font-mono ${lvl === s ? "border-[color:var(--cyber-cyan)] text-glow-cyan" : "border-white/10 text-muted-foreground hover:text-foreground"}`}>{s}</button>
           ))}
         </div>
-        <button className="text-xs px-3 py-2 rounded-lg glass border border-[color:var(--cyber-cyan)]/30 hover:glow-cyan flex items-center gap-1.5">
+        <a href={nidsApi.logsExportUrl()} target="_blank" rel="noreferrer"
+          className="text-xs px-3 py-2 rounded-lg glass border border-[color:var(--cyber-cyan)]/30 hover:glow-cyan flex items-center gap-1.5">
           <Download className="h-3.5 w-3.5" /> Export
-        </button>
+        </a>
       </div>
 
       <div className="glass cyber-border rounded-xl p-4 font-mono text-xs max-h-[600px] overflow-y-auto">
