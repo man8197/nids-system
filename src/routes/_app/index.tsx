@@ -189,7 +189,7 @@ function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {logs.map((l, i) => (
+              {liveLogs.map((l, i) => (
                 <tr key={i} className="border-b border-white/5 hover:bg-white/[0.02]">
                   <td className="py-3 font-mono text-xs text-muted-foreground">{l.time}</td>
                   <td className="font-mono text-xs">{l.src}</td>
