@@ -1,29 +1,56 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AlertOctagon, ShieldAlert, Eye, Zap, Filter, Search, X } from "lucide-react";
+import { useLiveStream } from "@/lib/nidsApi";
+import { useGlobalSearch } from "@/lib/globalSearch";
 
 export const Route = createFileRoute("/_app/alerts")({ component: Alerts });
 
 type Sev = "Critical" | "High" | "Medium" | "Low";
+type Alert = { id: number; sev: Sev; title: string; src: string; time: string; desc: string; color: string };
 
-const all = [
-  { id: 1, sev: "Critical" as Sev, title: "DDoS amplification — 14k pps", src: "203.45.122.18", time: "14:32:08", desc: "Coordinated UDP amplification using DNS reflection from multiple ASNs.", color: "red" },
-  { id: 2, sev: "High" as Sev, title: "SSH brute force burst", src: "91.218.7.42", time: "14:31:54", desc: "1,820 failed auth attempts in 90s targeting administrative accounts.", color: "pink" },
-  { id: 3, sev: "Medium" as Sev, title: "Anomalous lateral movement", src: "10.0.2.18", time: "14:30:47", desc: "SMB enumeration patterns inconsistent with user behavior baseline.", color: "purple" },
-  { id: 4, sev: "Critical" as Sev, title: "Ransomware signature match", src: "172.111.0.34", time: "14:30:12", desc: "File entropy + crypto API calls match LockBit 3.0 signature.", color: "red" },
-  { id: 5, sev: "Low" as Sev, title: "Unusual DNS lookup", src: "88.214.26.110", time: "14:29:33", desc: "DGA-like domain resolution, no payload delivery observed.", color: "cyan" },
-  { id: 6, sev: "High" as Sev, title: "SQL injection probe", src: "45.95.169.203", time: "14:28:11", desc: "UNION-based attempts against /api/users endpoint.", color: "pink" },
-  { id: 7, sev: "Medium" as Sev, title: "Port scan from new ASN", src: "158.69.124.9", time: "14:27:02", desc: "Sequential scan across 4,000 ports on edge node.", color: "purple" },
+const sevFor = (label: string): Sev => {
+  const u = label.toUpperCase();
+  if (u.includes("DDOS") || u.includes("DOS") || u.includes("HEARTBLEED")) return "Critical";
+  if (u.includes("BRUTE") || u.includes("INFILTRATION") || u.includes("BOT")) return "High";
+  if (u.includes("PORTSCAN") || u.includes("WEB")) return "Medium";
+  return "Low";
+};
+const sevColor: Record<Sev, string> = { Critical: "red", High: "pink", Medium: "purple", Low: "cyan" };
+
+const fallback: Alert[] = [
+  { id: 1, sev: "Critical", title: "DDoS amplification — 14k pps", src: "203.45.122.18", time: "14:32:08", desc: "Coordinated UDP amplification from multiple ASNs.", color: "red" },
+  { id: 2, sev: "High", title: "SSH brute force burst", src: "91.218.7.42", time: "14:31:54", desc: "1,820 failed auth attempts in 90s.", color: "pink" },
+  { id: 3, sev: "Medium", title: "Anomalous lateral movement", src: "10.0.2.18", time: "14:30:47", desc: "SMB enumeration inconsistent with baseline.", color: "purple" },
+  { id: 4, sev: "Low", title: "Unusual DNS lookup", src: "88.214.26.110", time: "14:29:33", desc: "DGA-like domain resolution.", color: "cyan" },
 ];
 
 const sevs: Sev[] = ["Critical", "High", "Medium", "Low"];
 const icons: Record<Sev, any> = { Critical: AlertOctagon, High: ShieldAlert, Medium: Eye, Low: Zap };
 
 function Alerts() {
+  const { events } = useLiveStream(30);
+  const { query: globalQ, setQuery: setGlobalQ } = useGlobalSearch();
   const [filter, setFilter] = useState<Sev | "All">("All");
-  const [q, setQ] = useState("");
-  const [open, setOpen] = useState<typeof all[number] | null>(null);
+  const [localQ, setLocalQ] = useState("");
+  const q = globalQ || localQ;
+  useEffect(() => { if (globalQ) setLocalQ(globalQ); }, [globalQ]);
+  const [open, setOpen] = useState<Alert | null>(null);
+
+  const liveAlerts: Alert[] = events.filter(e => e.is_attack).map((e, i) => {
+    const sev = sevFor(e.label);
+    return {
+      id: i,
+      sev,
+      title: `${e.label} detected on port ${e.dst_port}`,
+      src: e.src_ip,
+      time: new Date(Date.now() - i * 1000).toLocaleTimeString(),
+      desc: `Random Forest classified flow as ${e.label} with ${e.confidence != null ? (e.confidence * 100).toFixed(1) + "%" : "high"} confidence.`,
+      color: sevColor[sev],
+    };
+  });
+  const all = liveAlerts.length > 0 ? liveAlerts : fallback;
   const filtered = all.filter(a => (filter === "All" || a.sev === filter) && (q === "" || a.title.toLowerCase().includes(q.toLowerCase()) || a.src.includes(q)));
 
   const counts = sevs.map(s => ({ s, n: all.filter(a => a.sev === s).length }));
