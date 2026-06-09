@@ -70,15 +70,15 @@ function Threats() {
           </div>
           <div className="flex-1">
             <div className="text-xs tracking-[0.3em] text-muted-foreground">NEURAL PREDICTION ENGINE</div>
-            <h2 className="text-2xl md:text-3xl font-bold gradient-text mt-1">Imminent attack vector detected</h2>
+            <h2 className="text-2xl md:text-3xl font-bold gradient-text mt-1">Dominant vector: {topAttack}</h2>
             <p className="text-sm text-muted-foreground mt-2 max-w-2xl">
-              AI models forecast a 87% probability of coordinated DDoS within the next 6 hours, originating from 14 ASNs across Eastern Europe. Auto-mitigation policies engaged.
+              ML models classify {topAttack} as the dominant attack pattern in the analyzed traffic ({stats ? `${labels[0]?.[1].toLocaleString()} flows` : "loading"}). Auto-mitigation policies engaged.
             </p>
           </div>
           <div className="grid grid-cols-3 gap-3 text-center">
             {[
-              { l: "Confidence", v: "87%", c: "purple" },
-              { l: "ETA", v: "6h", c: "pink" },
+              { l: "Confidence", v: `${topConfidence}%`, c: "purple" },
+              { l: "Classes", v: String(labels.length || 6), c: "pink" },
               { l: "Severity", v: "HIGH", c: "red" },
             ].map(s => (
               <div key={s.l} className="glass rounded-lg px-4 py-3">
