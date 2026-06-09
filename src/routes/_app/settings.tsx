@@ -99,3 +99,63 @@ function Settings() {
     </div>
   );
 }
+
+function DatasetUploader() {
+  const [status, setStatus] = useState<string>("");
+  const [busy, setBusy] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+
+  async function upload() {
+    if (!file) return;
+    setBusy(true);
+    setStatus("Uploading & retraining models — this can take 30-90s for large CSVs…");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`${nidsApi.base}/api/upload?retrain=true`, { method: "POST", body: fd });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.detail || "Upload failed");
+      setStatus(`✓ Saved ${j.saved} (${(j.size / 1024).toFixed(1)} KB) · models retrained.`);
+    } catch (e: any) {
+      setStatus(`✗ ${e.message}. Is the Python backend running on ${nidsApi.base}?`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function retrain() {
+    setBusy(true);
+    setStatus("Retraining on current dataset…");
+    try {
+      const res = await fetch(`${nidsApi.base}/api/retrain`, { method: "POST" });
+      if (!res.ok) throw new Error("Retrain failed");
+      setStatus("✓ Models retrained.");
+    } catch (e: any) {
+      setStatus(`✗ ${e.message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <Row label="Upload CICIDS CSV" hint="Trains Random Forest, Decision Tree & KNN on the new file">
+        <label className="text-xs px-3 py-1.5 rounded-lg glass border border-[color:var(--cyber-cyan)]/30 cursor-pointer hover:glow-cyan flex items-center gap-1.5">
+          <Upload className="h-3.5 w-3.5" /> {file ? file.name.slice(0, 24) : "Choose file"}
+          <input type="file" accept=".csv" className="hidden" onChange={e => setFile(e.target.files?.[0] || null)} />
+        </label>
+      </Row>
+      <div className="flex gap-2">
+        <button disabled={!file || busy} onClick={upload}
+          className="flex-1 py-2 rounded-lg bg-gradient-to-r from-[color:var(--cyber-cyan)] to-[color:var(--cyber-purple)] text-black font-bold text-xs disabled:opacity-40 flex items-center justify-center gap-2">
+          <Upload className="h-3.5 w-3.5" /> Upload &amp; Train
+        </button>
+        <button disabled={busy} onClick={retrain}
+          className="px-4 py-2 rounded-lg glass border border-white/10 text-xs flex items-center gap-2 disabled:opacity-40">
+          <RefreshCw className={`h-3.5 w-3.5 ${busy ? "animate-spin" : ""}`} /> Retrain
+        </button>
+      </div>
+      {status && <div className="text-[11px] text-muted-foreground mt-1">{status}</div>}
+    </>
+  );
+}
