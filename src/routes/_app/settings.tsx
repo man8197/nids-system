@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { Sun, Moon, Bell, Brain, Database, Plug, Lock, Save } from "lucide-react";
+import { Sun, Moon, Bell, Brain, Database, Lock, Save, Upload, RefreshCw } from "lucide-react";
+import { nidsApi } from "@/lib/nidsApi";
 
 export const Route = createFileRoute("/_app/settings")({ component: Settings });
 
@@ -80,10 +81,8 @@ function Settings() {
         <Row label="Behavioral baselining" hint="Retrain every 24h"><Toggle on onChange={() => {}} /></Row>
       </Section>
 
-      <Section title="API INTEGRATIONS" icon={<Plug className="h-4 w-4 text-glow-green" />}>
-        {["Splunk SIEM", "Slack #soc-alerts", "PagerDuty", "Microsoft Sentinel"].map(s => (
-          <Row key={s} label={s}><span className="text-[10px] tracking-widest text-glow-green px-2 py-0.5 rounded-full border border-[color:var(--cyber-green)]/30">CONNECTED</span></Row>
-        ))}
+      <Section title="DATASET UPLOAD" icon={<Upload className="h-4 w-4 text-glow-green" />}>
+        <DatasetUploader />
       </Section>
 
       <Section title="DATABASE" icon={<Database className="h-4 w-4 text-glow-cyan" />}>
@@ -98,5 +97,65 @@ function Settings() {
         </button>
       </div>
     </div>
+  );
+}
+
+function DatasetUploader() {
+  const [status, setStatus] = useState<string>("");
+  const [busy, setBusy] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+
+  async function upload() {
+    if (!file) return;
+    setBusy(true);
+    setStatus("Uploading & retraining models — this can take 30-90s for large CSVs…");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`${nidsApi.base}/api/upload?retrain=true`, { method: "POST", body: fd });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.detail || "Upload failed");
+      setStatus(`✓ Saved ${j.saved} (${(j.size / 1024).toFixed(1)} KB) · models retrained.`);
+    } catch (e: any) {
+      setStatus(`✗ ${e.message}. Is the Python backend running on ${nidsApi.base}?`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function retrain() {
+    setBusy(true);
+    setStatus("Retraining on current dataset…");
+    try {
+      const res = await fetch(`${nidsApi.base}/api/retrain`, { method: "POST" });
+      if (!res.ok) throw new Error("Retrain failed");
+      setStatus("✓ Models retrained.");
+    } catch (e: any) {
+      setStatus(`✗ ${e.message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <Row label="Upload CICIDS CSV" hint="Trains Random Forest, Decision Tree & KNN on the new file">
+        <label className="text-xs px-3 py-1.5 rounded-lg glass border border-[color:var(--cyber-cyan)]/30 cursor-pointer hover:glow-cyan flex items-center gap-1.5">
+          <Upload className="h-3.5 w-3.5" /> {file ? file.name.slice(0, 24) : "Choose file"}
+          <input type="file" accept=".csv" className="hidden" onChange={e => setFile(e.target.files?.[0] || null)} />
+        </label>
+      </Row>
+      <div className="flex gap-2">
+        <button disabled={!file || busy} onClick={upload}
+          className="flex-1 py-2 rounded-lg bg-gradient-to-r from-[color:var(--cyber-cyan)] to-[color:var(--cyber-purple)] text-black font-bold text-xs disabled:opacity-40 flex items-center justify-center gap-2">
+          <Upload className="h-3.5 w-3.5" /> Upload &amp; Train
+        </button>
+        <button disabled={busy} onClick={retrain}
+          className="px-4 py-2 rounded-lg glass border border-white/10 text-xs flex items-center gap-2 disabled:opacity-40">
+          <RefreshCw className={`h-3.5 w-3.5 ${busy ? "animate-spin" : ""}`} /> Retrain
+        </button>
+      </div>
+      {status && <div className="text-[11px] text-muted-foreground mt-1">{status}</div>}
+    </>
   );
 }

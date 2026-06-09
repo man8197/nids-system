@@ -26,12 +26,6 @@ const ml = [
   { m: "W-4", acc: 94.2, prec: 92.8, rec: 91.5 },
 ];
 
-const reports = [
-  { name: "Executive Summary — Sep 2025", type: "PDF", size: "2.4 MB", date: "Sep 14" },
-  { name: "Weekly Threat Intelligence", type: "PDF", size: "1.8 MB", date: "Sep 12" },
-  { name: "ML Model Performance Report", type: "CSV", size: "640 KB", date: "Sep 10" },
-  { name: "Compliance Audit Q3", type: "PDF", size: "5.1 MB", date: "Sep 01" },
-];
 
 function Reports() {
   const { data: metrics } = useBackend(() => nidsApi.metrics(), []);
@@ -99,22 +93,8 @@ function Reports() {
           </div>
         </div>
 
-        <div className="space-y-2">
-          {reports.map((r, i) => (
-            <motion.div key={r.name} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-              className="glass rounded-lg p-3 flex items-center gap-4">
-              <div className="h-10 w-10 rounded-lg bg-[color:var(--cyber-cyan)]/15 flex items-center justify-center glow-cyan">
-                <FileText className="h-4 w-4 text-glow-cyan" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{r.name}</div>
-                <div className="text-[11px] text-muted-foreground">{r.type} · {r.size} · {r.date}</div>
-              </div>
-              <button className="text-xs px-3 py-1.5 rounded-lg glass border border-[color:var(--cyber-cyan)]/30 hover:glow-cyan flex items-center gap-1.5">
-                <Download className="h-3.5 w-3.5" /> Download
-              </button>
-            </motion.div>
-          ))}
+        <div className="text-xs text-muted-foreground">
+          Reports are generated live from the trained ML pipeline. CSV/XLSX include the full label distribution, model metrics (accuracy, precision, recall, F1, ROC-AUC), and top feature importances. PDF includes a formatted executive summary.
         </div>
       </div>
     </div>
