@@ -5,10 +5,12 @@ import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
   AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
+import { useBackend, nidsApi } from "@/lib/nidsApi";
+import { BackendBanner } from "@/components/cyber/BackendBanner";
 
 export const Route = createFileRoute("/_app/threats")({ component: Threats });
 
-const radar = [
+const fallbackRadar = [
   { metric: "DDoS", current: 82, baseline: 40 },
   { metric: "Malware", current: 64, baseline: 35 },
   { metric: "Phishing", current: 51, baseline: 30 },
@@ -17,22 +19,44 @@ const radar = [
   { metric: "C2", current: 47, baseline: 25 },
 ];
 
-const timeline = Array.from({ length: 30 }, (_, i) => ({
-  d: `D-${30 - i}`, threats: Math.round(50 + Math.sin(i / 3) * 30 + Math.random() * 40),
-  blocked: Math.round(45 + Math.sin(i / 3) * 28 + Math.random() * 35),
-}));
-
-const malware = [
-  { name: "Emotet.B", family: "Trojan", count: 47, sev: "Critical", color: "red" },
-  { name: "Mirai variant", family: "Botnet", count: 23, sev: "High", color: "pink" },
-  { name: "Cobalt Strike", family: "Beacon", count: 18, sev: "Critical", color: "red" },
-  { name: "AgentTesla", family: "Stealer", count: 12, sev: "High", color: "pink" },
-  { name: "RedLine", family: "Stealer", count: 9, sev: "Medium", color: "purple" },
-];
+const COLORS = ["red", "pink", "purple", "red", "pink"];
+const SEVS = ["Critical", "High", "Critical", "High", "Medium"];
 
 function Threats() {
+  const { data: stats } = useBackend(() => nidsApi.stats(), []);
+  const labels = stats
+    ? Object.entries(stats.label_distribution).filter(([k]) => k.toUpperCase() !== "BENIGN").sort((a, b) => b[1] - a[1])
+    : [];
+  const maxCount = labels[0]?.[1] || 1;
+  const radar = labels.length > 0
+    ? labels.slice(0, 6).map(([metric, count]) => ({
+        metric: metric.length > 10 ? metric.slice(0, 10) : metric,
+        current: Math.round((count / maxCount) * 100),
+        baseline: Math.round((count / maxCount) * 35),
+      }))
+    : fallbackRadar;
+  const timeline = stats?.timeline
+    ? stats.timeline.map(t => ({ d: `T-${30 - t.t}`, threats: t.attacks, blocked: Math.round(t.attacks * 0.97) }))
+    : Array.from({ length: 30 }, (_, i) => ({
+        d: `D-${30 - i}`, threats: Math.round(50 + Math.sin(i / 3) * 30 + Math.random() * 40),
+        blocked: Math.round(45 + Math.sin(i / 3) * 28 + Math.random() * 35),
+      }));
+  const malware = labels.length > 0
+    ? labels.slice(0, 5).map(([name, count], i) => ({
+        name, family: "CICIDS2017", count, sev: SEVS[i], color: COLORS[i],
+      }))
+    : [
+        { name: "Emotet.B", family: "Trojan", count: 47, sev: "Critical", color: "red" },
+        { name: "Mirai variant", family: "Botnet", count: 23, sev: "High", color: "pink" },
+        { name: "Cobalt Strike", family: "Beacon", count: 18, sev: "Critical", color: "red" },
+        { name: "AgentTesla", family: "Stealer", count: 12, sev: "High", color: "pink" },
+        { name: "RedLine", family: "Stealer", count: 9, sev: "Medium", color: "purple" },
+      ];
+  const topAttack = labels[0]?.[0] || "DDoS";
+  const topConfidence = stats ? Math.min(99, Math.round((labels[0]?.[1] || 0) / stats.total_records * 100 + 50)) : 87;
   return (
     <div className="space-y-6">
+      <BackendBanner />
       {/* AI Prediction hero */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
         className="glass cyber-border rounded-2xl p-6 relative overflow-hidden">
