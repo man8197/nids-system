@@ -54,12 +54,13 @@ async function get<T>(path: string): Promise<T> {
 
 export const nidsApi = {
   base: API_BASE,
-  health: () => get<{ status: string; ready: boolean; models_loaded: string[] }>("/api/health"),
+  health: () => get<{ status: string; ready: boolean; models_loaded: string[]; datasets?: string[] }>("/api/health"),
   metrics: () => get<Record<string, ModelMetric>>("/api/metrics"),
   stats: () => get<DatasetStats>("/api/dataset/stats"),
   importance: () => get<FeatureImportance[]>("/api/feature-importance"),
   insights: () => get<Insight[]>("/api/insights"),
   reportUrl: (format: "csv" | "excel" | "pdf") => `${API_BASE}/api/reports/${format}`,
+  logsExportUrl: () => `${API_BASE}/api/logs/export`,
 };
 
 export function useBackend<T>(fn: () => Promise<T>, deps: any[] = []) {
