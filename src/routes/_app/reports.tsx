@@ -26,12 +26,6 @@ const ml = [
   { m: "W-4", acc: 94.2, prec: 92.8, rec: 91.5 },
 ];
 
-const reports = [
-  { name: "Executive Summary — Sep 2025", type: "PDF", size: "2.4 MB", date: "Sep 14" },
-  { name: "Weekly Threat Intelligence", type: "PDF", size: "1.8 MB", date: "Sep 12" },
-  { name: "ML Model Performance Report", type: "CSV", size: "640 KB", date: "Sep 10" },
-  { name: "Compliance Audit Q3", type: "PDF", size: "5.1 MB", date: "Sep 01" },
-];
 
 function Reports() {
   const { data: metrics } = useBackend(() => nidsApi.metrics(), []);
