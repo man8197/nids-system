@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { Sun, Moon, Bell, Brain, Database, Plug, Lock, Save } from "lucide-react";
+import { Sun, Moon, Bell, Brain, Database, Lock, Save, Upload, RefreshCw } from "lucide-react";
+import { nidsApi } from "@/lib/nidsApi";
 
 export const Route = createFileRoute("/_app/settings")({ component: Settings });
 
@@ -80,10 +81,8 @@ function Settings() {
         <Row label="Behavioral baselining" hint="Retrain every 24h"><Toggle on onChange={() => {}} /></Row>
       </Section>
 
-      <Section title="API INTEGRATIONS" icon={<Plug className="h-4 w-4 text-glow-green" />}>
-        {["Splunk SIEM", "Slack #soc-alerts", "PagerDuty", "Microsoft Sentinel"].map(s => (
-          <Row key={s} label={s}><span className="text-[10px] tracking-widest text-glow-green px-2 py-0.5 rounded-full border border-[color:var(--cyber-green)]/30">CONNECTED</span></Row>
-        ))}
+      <Section title="DATASET UPLOAD" icon={<Upload className="h-4 w-4 text-glow-green" />}>
+        <DatasetUploader />
       </Section>
 
       <Section title="DATABASE" icon={<Database className="h-4 w-4 text-glow-cyan" />}>
