@@ -11,7 +11,7 @@ import {
 import { WorldAttackMap } from "@/components/cyber/WorldAttackMap";
 import { LiveAlertsFeed } from "@/components/cyber/LiveAlertsFeed";
 import { BackendBanner } from "@/components/cyber/BackendBanner";
-import { useBackend, nidsApi } from "@/lib/nidsApi";
+import { useBackend, nidsApi, useLiveStream } from "@/lib/nidsApi";
 
 export const Route = createFileRoute("/_app/")({ component: Dashboard });
 
@@ -23,22 +23,15 @@ const traffic = Array.from({ length: 24 }, (_, i) => ({
   threats: Math.round(Math.random() * 30 + (i > 18 ? 40 : 5)),
 }));
 
-const attackDist = [
-  { name: "DDoS", value: 432, color: "var(--cyber-pink)" },
-  { name: "Brute Force", value: 281, color: "var(--cyber-purple)" },
-  { name: "SQL Injection", value: 156, color: "var(--cyber-cyan)" },
-  { name: "Malware", value: 198, color: "var(--cyber-red)" },
-  { name: "Phishing", value: 92, color: "var(--cyber-amber)" },
-];
+const ATTACK_COLORS = ["var(--cyber-pink)", "var(--cyber-purple)", "var(--cyber-cyan)", "var(--cyber-red)", "var(--cyber-amber)", "var(--cyber-green)"];
 
-const logs = [
-  { time: "14:32:08", src: "203.45.122.18", dst: "10.0.2.14", type: "DDoS", sev: "Critical" },
-  { time: "14:31:54", src: "91.218.7.42", dst: "10.0.1.5", type: "Brute Force", sev: "High" },
-  { time: "14:31:21", src: "158.69.124.9", dst: "10.0.3.22", type: "Port Scan", sev: "Medium" },
-  { time: "14:30:47", src: "45.95.169.203", dst: "10.0.2.11", type: "SQL Injection", sev: "Critical" },
-  { time: "14:30:12", src: "172.111.0.34", dst: "10.0.4.7", type: "Malware C2", sev: "High" },
-  { time: "14:29:33", src: "88.214.26.110", dst: "10.0.1.18", type: "Anomaly", sev: "Low" },
-];
+const sevForLabel = (label: string): "Critical" | "High" | "Medium" | "Low" => {
+  const u = label.toUpperCase();
+  if (u.includes("DDOS") || u.includes("DOS") || u.includes("HEARTBLEED")) return "Critical";
+  if (u.includes("BRUTE") || u.includes("INFILTRATION") || u.includes("BOT")) return "High";
+  if (u.includes("PORTSCAN") || u.includes("WEB")) return "Medium";
+  return "Low";
+};
 
 const sevColor: Record<string, string> = {
   Critical: "text-glow-red border-[color:var(--cyber-red)]/40 bg-[color:var(--cyber-red)]/10",
@@ -50,7 +43,36 @@ const sevColor: Record<string, string> = {
 function Dashboard() {
   const { data: stats } = useBackend(() => nidsApi.stats(), []);
   const { data: metrics } = useBackend(() => nidsApi.metrics(), []);
+  const { events } = useLiveStream(8);
   const rf = metrics?.random_forest;
+
+  const attackDist = stats
+    ? Object.entries(stats.label_distribution)
+        .filter(([k]) => k.toUpperCase() !== "BENIGN")
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6)
+        .map(([name, value], i) => ({ name, value, color: ATTACK_COLORS[i % ATTACK_COLORS.length] }))
+    : [
+        { name: "DDoS", value: 432, color: "var(--cyber-pink)" },
+        { name: "Brute Force", value: 281, color: "var(--cyber-purple)" },
+        { name: "SQL Injection", value: 156, color: "var(--cyber-cyan)" },
+        { name: "Malware", value: 198, color: "var(--cyber-red)" },
+      ];
+
+  const liveLogs = events.length > 0
+    ? events.map((e, i) => ({
+        time: new Date(Date.now() - i * 1000).toLocaleTimeString(),
+        src: e.src_ip,
+        dst: `10.0.${(i % 4) + 1}.${(i % 254) + 1}`,
+        type: e.label,
+        sev: sevForLabel(e.label),
+      }))
+    : [
+        { time: "14:32:08", src: "203.45.122.18", dst: "10.0.2.14", type: "DDoS", sev: "Critical" as const },
+        { time: "14:31:54", src: "91.218.7.42", dst: "10.0.1.5", type: "Brute Force", sev: "High" as const },
+        { time: "14:31:21", src: "158.69.124.9", dst: "10.0.3.22", type: "Port Scan", sev: "Medium" as const },
+        { time: "14:30:47", src: "45.95.169.203", dst: "10.0.2.11", type: "SQL Injection", sev: "Critical" as const },
+      ];
 
   return (
     <div className="space-y-6">
