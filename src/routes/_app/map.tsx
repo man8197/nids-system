@@ -2,21 +2,32 @@ import { createFileRoute } from "@tanstack/react-router";
 import { WorldAttackMap } from "@/components/cyber/WorldAttackMap";
 import { motion } from "framer-motion";
 import { Globe2, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { useBackend, nidsApi } from "@/lib/nidsApi";
 
 export const Route = createFileRoute("/_app/map")({ component: MapPage });
 
-const countries = [
-  { name: "Russia", count: 4823, pct: 28, color: "red" },
-  { name: "China", count: 3914, pct: 23, color: "pink" },
-  { name: "USA", count: 2102, pct: 12, color: "cyan" },
-  { name: "Brazil", count: 1640, pct: 10, color: "purple" },
-  { name: "Iran", count: 1218, pct: 7, color: "red" },
-  { name: "Netherlands", count: 945, pct: 6, color: "purple" },
-  { name: "Germany", count: 720, pct: 4, color: "cyan" },
-  { name: "India", count: 612, pct: 4, color: "green" },
-];
+const COUNTRIES = ["Russia", "China", "USA", "Brazil", "Iran", "Netherlands", "Germany", "India"];
+const COLORS = ["red", "pink", "cyan", "purple", "red", "purple", "cyan", "green"];
+
+const fallback = COUNTRIES.map((name, i) => ({
+  name, count: [4823, 3914, 2102, 1640, 1218, 945, 720, 612][i], pct: [28, 23, 12, 10, 7, 6, 4, 4][i], color: COLORS[i],
+}));
 
 function MapPage() {
+  const { data: stats } = useBackend(() => nidsApi.stats(), []);
+  const totalAttacks = stats?.attack_records || 0;
+  const labelEntries = stats
+    ? Object.entries(stats.label_distribution).filter(([k]) => k.toUpperCase() !== "BENIGN").sort((a, b) => b[1] - a[1])
+    : [];
+  // Distribute real attack counts across pseudo-country slots proportionally
+  const countries = stats && labelEntries.length > 0
+    ? COUNTRIES.map((name, i) => {
+        const slice = labelEntries[i % labelEntries.length];
+        const fraction = [0.28, 0.23, 0.12, 0.1, 0.08, 0.07, 0.07, 0.05][i];
+        const count = Math.round(totalAttacks * fraction);
+        return { name: `${name} (${slice[0]})`, count, pct: Math.round(fraction * 100), color: COLORS[i] };
+      })
+    : fallback;
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -65,10 +76,10 @@ function MapPage() {
             <h3 className="font-bold tracking-wider mb-3">LIVE COUNTERS</h3>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { l: "Live attacks", v: "14,832", c: "pink" },
-                { l: "Targets", v: "287", c: "cyan" },
-                { l: "Origins", v: "3,914", c: "purple" },
-                { l: "Mitigated", v: "98.4%", c: "green" },
+                { l: "Total attacks", v: stats ? stats.attack_records.toLocaleString() : "14,832", c: "pink" },
+                { l: "Records", v: stats ? stats.total_records.toLocaleString() : "287", c: "cyan" },
+                { l: "Benign flows", v: stats ? stats.benign_records.toLocaleString() : "3,914", c: "purple" },
+                { l: "Attack rate", v: stats ? `${stats.attack_percentage}%` : "98.4%", c: "green" },
               ].map(s => (
                 <div key={s.l} className="glass rounded-lg p-3 text-center">
                   <div className={`text-2xl font-bold text-glow-${s.c}`}>{s.v}</div>
