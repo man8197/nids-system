@@ -1,7 +1,12 @@
 import { Bell, Search, Shield } from "lucide-react";
 import { motion } from "framer-motion";
+import { useGlobalSearch } from "@/lib/globalSearch";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 
 export function TopBar({ title, subtitle }: { title: string; subtitle?: string }) {
+  const { query, setQuery } = useGlobalSearch();
+  const navigate = useNavigate();
+  const { location } = useRouterState();
   return (
     <header className="sticky top-0 z-20 glass-strong border-b border-[color:var(--cyber-cyan)]/15 px-6 py-4 flex items-center justify-between gap-4">
       <div>
@@ -10,12 +15,22 @@ export function TopBar({ title, subtitle }: { title: string; subtitle?: string }
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg glass w-72">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!["/alerts", "/logs", "/threats", "/map"].includes(location.pathname)) {
+              navigate({ to: "/alerts" });
+            }
+          }}
+          className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg glass w-72">
           <Search className="h-4 w-4 text-muted-foreground" />
-          <input placeholder="Search threats, IPs, logs…"
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search threats, IPs, logs…"
             className="bg-transparent outline-none text-sm flex-1 placeholder:text-muted-foreground" />
-          <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground">⌘K</kbd>
-        </div>
+          <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground">↵</kbd>
+        </form>
 
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg glass">
           <motion.span
