@@ -14,11 +14,14 @@ export function BackendBanner() {
             ML BACKEND OFFLINE
           </div>
           <div className="text-xs text-muted-foreground mt-1">
-            Showing demo values. Start the Python backend in VS Code to see real
-            CICIDS2017 model output:
+            Showing demo values. Start the Python backend in VS Code to see real CICIDS2017 model output (dataset already in <code>backend/data/dos.csv</code>):
           </div>
-          <code className="block mt-2 text-[11px] font-mono bg-black/40 px-3 py-2 rounded border border-white/10">
-            cd backend &amp;&amp; python -m app.train &amp;&amp; uvicorn app.main:app --reload
+          <code className="block mt-2 text-[11px] font-mono bg-black/40 px-3 py-2 rounded border border-white/10 whitespace-pre">
+{`cd backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python -m app.train
+uvicorn app.main:app --reload --port 8000`}
           </code>
         </div>
       </div>
